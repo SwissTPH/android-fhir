@@ -1403,6 +1403,41 @@ class MoreQuestionnaireItemComponentsTest {
   }
 
   @Test
+  fun `isExpressionReferencedBy should find each of several link IDs in one expression`() {
+    val item1 =
+      Questionnaire.QuestionnaireItemComponent().apply {
+        linkId = "A"
+        addExtension(
+          EXTENSION_CALCULATED_EXPRESSION_URL,
+          Expression().apply {
+            this.expression =
+              "%resource.item.where(linkId = 'B').answer.value + " +
+                "%resource.item.where(linkId='C').answer.value"
+            this.language = "text/fhirpath"
+          },
+        )
+      }
+    assertThat(
+        Questionnaire.QuestionnaireItemComponent()
+          .apply { linkId = "B" }
+          .isExpressionReferencedBy(item1),
+      )
+      .isTrue()
+    assertThat(
+        Questionnaire.QuestionnaireItemComponent()
+          .apply { linkId = "C" }
+          .isExpressionReferencedBy(item1),
+      )
+      .isTrue()
+    assertThat(
+        Questionnaire.QuestionnaireItemComponent()
+          .apply { linkId = "D" }
+          .isExpressionReferencedBy(item1),
+      )
+      .isFalse()
+  }
+
+  @Test
   fun `isExpressionReferencedBy should return true for reference with whitespace`() {
     val item1 =
       Questionnaire.QuestionnaireItemComponent().apply {
