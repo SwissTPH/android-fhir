@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Google LLC
+ * Copyright 2025-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.launch
 
 @Composable
@@ -183,7 +183,13 @@ internal data class EditTextFieldState(
   init {
     coroutineScope.launch {
       snapshotFlow { inputText }
-        .drop(1) // Drops the initial value emitted by snapshotFlow
+        // Skip the value the field opened with, matched by value rather than by position.
+        // `snapshotFlow` emits whatever `inputText` holds when collection starts, and this
+        // `launch` is dispatched, so a keystroke can land before that happens - `drop(1)` then
+        // discarded the typed text instead of the initial value and the answer was only
+        // committed on focus loss. Dropping while the value still equals what we opened with is
+        // equivalent when nothing was typed, and keeps the keystroke when something was.
+        .dropWhile { it == initialInputText }
         .debounce(HANDLE_INPUT_DEBOUNCE_TIME)
         .collectLatest { handleTextInputChange(it) }
     }
