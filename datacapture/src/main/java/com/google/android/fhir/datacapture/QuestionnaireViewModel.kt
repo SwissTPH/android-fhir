@@ -683,36 +683,52 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
    *
    * Only items that have not been modified by the user will be updated to prevent any event loops.
    *
+   * Updates cascade: when a calculated item's answer changes, the items whose calculations
+   * reference that item are recalculated in turn. Without this, an item that references both the
+   * changed item and another calculated item would be evaluated against the other item's answer
+   * from before the change, since every affected item is evaluated before any answer is written.
+   *
    * @param questionnaireItem The questionnaire item referenced by other items through
    *   [calculatedExpression].
    */
   private suspend fun updateAnswerWithAffectedCalculatedExpression(
     questionnaireItem: QuestionnaireItemComponent,
   ) {
-    expressionEvaluator
-      .evaluateAllAffectedCalculatedExpressions(
-        questionnaireItem,
-      )
-      .forEach { (questionnaireItem, calculatedAnswers) ->
-        // update all response item with updated values
-        questionnaireResponse.allItems
-          // Item answer should not be modified and touched by user;
-          // https://build.fhir.org/ig/HL7/sdc/StructureDefinition-sdc-questionnaire-calculatedExpression.html
-          .filter {
-            it.linkId == questionnaireItem.linkId &&
-              !modifiedQuestionnaireResponseItemSet.contains(it)
-          }
-          .forEach { questionnaireResponseItem ->
-            // update and notify only if new answer has changed to prevent any event loop
-            if (questionnaireResponseItem.answer.hasDifferentAnswerSet(calculatedAnswers)) {
-              questionnaireResponseItem.answer =
-                calculatedAnswers.map {
-                  val value = it.asExpectedType(questionnaireItem.type)
-                  QuestionnaireResponseItemAnswerComponent().setValue(value)
-                }
+    val changedItems = ArrayDeque(listOf(questionnaireItem))
+    // Cyclic dependencies are rejected when the questionnaire is loaded, so the cascade ends; the
+    // limit only guards against expressions that never settle on a value.
+    var remainingPasses = MAX_CALCULATED_EXPRESSION_PASSES
+    while (changedItems.isNotEmpty() && remainingPasses-- > 0) {
+      expressionEvaluator
+        .evaluateAllAffectedCalculatedExpressions(
+          changedItems.removeFirst(),
+        )
+        .forEach { (questionnaireItem, calculatedAnswers) ->
+          var answerChanged = false
+          // update all response item with updated values
+          questionnaireResponse.allItems
+            // Item answer should not be modified and touched by user;
+            // https://build.fhir.org/ig/HL7/sdc/StructureDefinition-sdc-questionnaire-calculatedExpression.html
+            .filter {
+              it.linkId == questionnaireItem.linkId &&
+                !modifiedQuestionnaireResponseItemSet.contains(it)
             }
+            .forEach { questionnaireResponseItem ->
+              // update and notify only if new answer has changed to prevent any event loop
+              if (questionnaireResponseItem.answer.hasDifferentAnswerSet(calculatedAnswers)) {
+                questionnaireResponseItem.answer =
+                  calculatedAnswers.map {
+                    val value = it.asExpectedType(questionnaireItem.type)
+                    QuestionnaireResponseItemAnswerComponent().setValue(value)
+                  }
+                answerChanged = true
+              }
+            }
+          if (answerChanged && changedItems.none { it.linkId == questionnaireItem.linkId }) {
+            changedItems.addLast(questionnaireItem)
           }
-      }
+        }
+    }
   }
 
   /**
@@ -1252,6 +1268,11 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
     return currentPageQuestionItems.all { it.item.validationResult is Valid }
   }
 }
+
+/**
+ * Upper bound on the number of calculated expression passes triggered by a single answer change.
+ */
+private const val MAX_CALCULATED_EXPRESSION_PASSES = 100
 
 typealias ItemToParentMap = MutableMap<QuestionnaireItemComponent, QuestionnaireItemComponent>
 

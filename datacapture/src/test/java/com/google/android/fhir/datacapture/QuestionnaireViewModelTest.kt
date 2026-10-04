@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -6414,6 +6414,98 @@ class QuestionnaireViewModelTest {
             birthdateItem.getQuestionnaireResponseItem().answer.first().valueDateType.valueAsString,
           )
           .isEqualTo(DateType(Date()).apply { add(Calendar.YEAR, -2) }.valueAsString)
+      }
+    }
+
+  @Test
+  fun `should cascade calculated expression updates to items depending on other calculated items`() =
+    runTest {
+      // c-status depends on both a-consent (answered by the user) and b-eligible (calculated from
+      // a-consent), so both are recalculated when a-consent changes. c-status must see the new
+      // value of b-eligible, not the one from before a-consent changed.
+      val questionnaire =
+        Questionnaire().apply {
+          id = "a-questionnaire"
+          addItem(
+            QuestionnaireItemComponent().apply {
+              linkId = "a-consent"
+              type = Questionnaire.QuestionnaireItemType.BOOLEAN
+            },
+          )
+          addItem(
+            QuestionnaireItemComponent().apply {
+              linkId = "b-eligible"
+              type = Questionnaire.QuestionnaireItemType.BOOLEAN
+              addExtension().apply {
+                url = EXTENSION_CALCULATED_EXPRESSION_URL
+                setValue(
+                  Expression().apply {
+                    this.language = "text/fhirpath"
+                    this.expression =
+                      "iif(%resource.item.where(linkId='a-consent').answer.value = true, true, false)"
+                  },
+                )
+              }
+            },
+          )
+          addItem(
+            QuestionnaireItemComponent().apply {
+              linkId = "c-status"
+              type = Questionnaire.QuestionnaireItemType.STRING
+              addExtension().apply {
+                url = EXTENSION_CALCULATED_EXPRESSION_URL
+                setValue(
+                  Expression().apply {
+                    this.language = "text/fhirpath"
+                    this.expression =
+                      "iif(%resource.item.where(linkId='a-consent').answer.exists() and " +
+                        "%resource.item.where(linkId='b-eligible').answer.value = true, " +
+                        "'active', 'inactive')"
+                  },
+                )
+              }
+            },
+          )
+        }
+
+      val viewModel = createQuestionnaireViewModel(questionnaire)
+      viewModel.runViewModelBlocking {
+        val statusItem =
+          viewModel
+            .getQuestionnaireItemViewItemList()
+            .first { it.asQuestionOrNull()?.questionnaireItem?.linkId == "c-status" }
+            .asQuestion()
+
+        assertThat(statusItem.getQuestionnaireResponseItem().answer.single().valueStringType.value)
+          .isEqualTo("inactive")
+
+        viewModel
+          .getQuestionnaireItemViewItemList()
+          .first { it.asQuestionOrNull()?.questionnaireItem?.linkId == "a-consent" }
+          .asQuestion()
+          .apply {
+            this.answersChangedCallback(
+              this.questionnaireItem,
+              this.getQuestionnaireResponseItem(),
+              listOf(
+                QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent().apply {
+                  this.value = BooleanType(true)
+                },
+              ),
+              null,
+            )
+          }
+
+        // Calculated expressions are updated on Dispatchers.IO after the answer change.
+        val statusResponseItem = statusItem.getQuestionnaireResponseItem()
+        val deadline = System.currentTimeMillis() + 5_000
+        while (
+          statusResponseItem.answer.singleOrNull()?.valueStringType?.value != "active" &&
+            System.currentTimeMillis() < deadline
+        ) {
+          Thread.sleep(20)
+        }
+        assertThat(statusResponseItem.answer.single().valueStringType.value).isEqualTo("active")
       }
     }
 
