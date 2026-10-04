@@ -27,31 +27,48 @@ import com.google.android.fhir.db.impl.DatabaseImpl.Companion.UNENCRYPTED_DATABA
 import java.time.Duration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SQLiteDatabaseHook
-import net.sqlcipher.database.SQLiteOpenHelper
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import timber.log.Timber
 
 /** A [SupportSQLiteOpenHelper] which initializes a [SQLiteDatabase] with a passphrase. */
 internal class SQLCipherSupportHelper(
   private val configuration: SupportSQLiteOpenHelper.Configuration,
-  hook: SQLiteDatabaseHook? = null,
+  private val hook: SQLiteDatabaseHook? = null,
   private val databaseErrorStrategy: DatabaseErrorStrategy,
   private val passphraseFetcher: () -> ByteArray,
 ) : SupportSQLiteOpenHelper {
 
   init {
-    SQLiteDatabase.loadLibs(configuration.context)
+    // net.zetetic:sqlcipher-android has no SQLiteDatabase.loadLibs(context); loading the
+    // native library is the caller's job. Repeat calls in a classloader are a no-op.
+    System.loadLibrary("sqlcipher")
   }
 
-  private val standardHelper =
+  /**
+   * Built on first open rather than in the constructor: sqlcipher-android takes the passphrase
+   * in SQLiteOpenHelper's constructor, where android-database-sqlcipher took it in
+   * getWritableDatabase(passphrase). The passphrase is fetched lazily (and with retry), so the
+   * helper cannot exist before the first open.
+   */
+  private var standardHelper: SQLiteOpenHelper? = null
+
+  /** Remembered so it can be passed whenever [standardHelper] is (re)built. */
+  private var writeAheadLoggingEnabled = false
+
+  private fun buildStandardHelper(passphrase: ByteArray): SQLiteOpenHelper =
     object :
       SQLiteOpenHelper(
         configuration.context,
         configuration.name,
+        passphrase,
         /* factory= */ null,
         configuration.callback.version,
+        /* minimumSupportedVersion= */ 0,
+        /* errorHandler= */ null,
         hook,
+        writeAheadLoggingEnabled,
       ) {
       override fun onCreate(db: SQLiteDatabase) {
         configuration.callback.onCreate(db)
@@ -75,10 +92,16 @@ internal class SQLCipherSupportHelper(
     }
 
   override val databaseName
-    get() = standardHelper.databaseName
+    get() = configuration.name
 
   override fun setWriteAheadLoggingEnabled(enabled: Boolean) {
-    standardHelper.setWriteAheadLoggingEnabled(enabled)
+    writeAheadLoggingEnabled = enabled
+    standardHelper?.setWriteAheadLoggingEnabled(enabled)
+  }
+
+  private fun openWritableDatabase(passphrase: ByteArray): SupportSQLiteDatabase {
+    val helper = standardHelper ?: buildStandardHelper(passphrase).also { standardHelper = it }
+    return helper.writableDatabase
   }
 
   override val writableDatabase: SupportSQLiteDatabase
@@ -89,12 +112,15 @@ internal class SQLCipherSupportHelper(
       }
       val key = runBlocking { getPassphraseWithRetry() }
       return try {
-        standardHelper.getWritableDatabase(key)
+        openWritableDatabase(key)
       } catch (ex: SQLiteException) {
         if (databaseErrorStrategy == DatabaseErrorStrategy.RECREATE_AT_OPEN) {
           Timber.w("Fail to open database. Recreating database.")
+          // Drop the helper too: it holds the handle to the file being deleted.
+          standardHelper?.close()
+          standardHelper = null
           configuration.context.getDatabasePath(databaseName).delete()
-          standardHelper.getWritableDatabase(key)
+          openWritableDatabase(key)
         } else {
           throw ex
         }
@@ -124,7 +150,8 @@ internal class SQLCipherSupportHelper(
     get() = writableDatabase
 
   override fun close() {
-    standardHelper.close()
+    standardHelper?.close()
+    standardHelper = null
   }
 
   private companion object {

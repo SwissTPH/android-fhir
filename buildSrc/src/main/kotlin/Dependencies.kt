@@ -101,7 +101,7 @@ object Dependencies {
   const val mockWebServer = "com.squareup.okhttp3:mockwebserver:${Versions.http}"
 
   const val jsonToolsPatch = "com.github.java-json-tools:json-patch:${Versions.jsonToolsPatch}"
-  const val sqlcipher = "net.zetetic:android-database-sqlcipher:${Versions.sqlcipher}"
+  const val sqlcipher = "net.zetetic:sqlcipher-android:${Versions.sqlcipher}"
   const val timber = "com.jakewharton.timber:timber:${Versions.timber}"
   const val woodstox = "com.fasterxml.woodstox:woodstox-core:${Versions.woodstox}"
   const val xerces = "xerces:xercesImpl:${Versions.xerces}"
@@ -144,7 +144,11 @@ object Dependencies {
     const val jsonAssert = "1.5.1"
     const val retrofit = "2.9.0"
     const val gsonConverter = "2.1.0"
-    const val sqlcipher = "4.5.4"
+    // net.zetetic:android-database-sqlcipher is EOL at 4.5.4 and its libsqlcipher.so is only
+    // 4 KB aligned, failing Android's 16 KB page-size requirement. sqlcipher-android is the
+    // successor. Pinned to 4.12.0: it is the newest release still on androidx.sqlite 2.2.0,
+    // which keeps it usable by consumers on Kotlin 1.9 (notably org.smartregister:p2p-lib).
+    const val sqlcipher = "4.12.0"
     const val timber = "5.0.1"
     const val woodstox = "6.5.1"
     const val xerces = "2.12.2"
