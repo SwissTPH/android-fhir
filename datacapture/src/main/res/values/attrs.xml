@@ -32,6 +32,9 @@
     <!--   Style for subtitle text. -->
     <attr name="questionnaireSubtitleTextStyle" format="reference" />
 
+    <!--   Style for flyover caption text shown just below the question. -->
+    <attr name="questionnaireFlyoverTextStyle" format="reference" />
+
     <!--   Style for help header. -->
     <attr name="questionnaireHelpHeaderStyle" format="reference" />
 

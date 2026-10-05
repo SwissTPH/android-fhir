@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,54 @@ class GroupHeaderViewTest {
   }
 
   @Test
+  fun `shows flyover below the question`() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Group?"
+          item = itemList
+        },
+        itemList,
+      ),
+    )
+
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).isVisible).isTrue()
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).text.toString())
+      .isEqualTo("flyover text")
+  }
+
+  @Test
+  fun `shows header when only flyover is present`() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply { item = itemList },
+        itemList,
+      ),
+    )
+
+    assertThat(view.visibility).isEqualTo(View.VISIBLE)
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).isVisible).isTrue()
+  }
+
+  @Test
   fun `shows helpButton if help code is present`() {
     view.bind(
       getQuestionnaireViewItemWithQuestionnaireItem(
@@ -353,6 +401,22 @@ class GroupHeaderViewTest {
             listOf(
               Coding().apply {
                 code = DisplayItemControlType.HELP.extensionCode
+                system = EXTENSION_ITEM_CONTROL_SYSTEM
+              },
+            )
+        },
+      )
+    }
+
+  private val itemControlExtensionWithFlyoverCode =
+    Extension().apply {
+      url = EXTENSION_ITEM_CONTROL_URL
+      setValue(
+        CodeableConcept().apply {
+          coding =
+            listOf(
+              Coding().apply {
+                code = DisplayItemControlType.FLYOVER.extensionCode
                 system = EXTENSION_ITEM_CONTROL_SYSTEM
               },
             )

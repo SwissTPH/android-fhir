@@ -300,6 +300,19 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
       }
     }
 
+  /** Tracks which flyover caption has been collapsed. Flyovers are expanded by default. */
+  private val collapsedFlyoverSet: MutableSet<QuestionnaireResponseItemComponent> = mutableSetOf()
+
+  /** Callback to save the flyover collapsed state. */
+  private val flyoverStateChangedCallback: (Boolean, QuestionnaireResponseItemComponent) -> Unit =
+    { isCollapsed, questionnaireResponseItem ->
+      if (isCollapsed) {
+        collapsedFlyoverSet.add(questionnaireResponseItem)
+      } else {
+        collapsedFlyoverSet.remove(questionnaireResponseItem)
+      }
+    }
+
   /**
    * Contains [QuestionnaireResponseItemComponent]s that have been modified by the user.
    * [QuestionnaireResponseItemComponent]s that have not been modified by the user will not be
@@ -1084,6 +1097,8 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
               ),
             isHelpCardOpen = isHelpCard && isHelpCardOpen,
             helpCardStateChangedCallback = helpCardStateChangedCallback,
+            isFlyoverCollapsed = collapsedFlyoverSet.contains(questionnaireResponseItem),
+            flyoverStateChangedCallback = flyoverStateChangedCallback,
           ),
         )
       add(question)

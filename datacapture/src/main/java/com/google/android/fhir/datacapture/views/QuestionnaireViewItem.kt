@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,9 @@ data class QuestionnaireViewItem(
   val helpCardStateChangedCallback: (Boolean, QuestionnaireResponseItemComponent) -> Unit =
     { _, _ ->
     },
+  val isFlyoverCollapsed: Boolean = false,
+  val flyoverStateChangedCallback: (Boolean, QuestionnaireResponseItemComponent) -> Unit = { _, _ ->
+  },
 ) {
 
   fun getQuestionnaireResponseItem(): QuestionnaireResponseItemComponent = questionnaireResponseItem
@@ -287,6 +290,8 @@ data class QuestionnaireViewItem(
     if (enabledDisplayItems != other.enabledDisplayItems) return false
     if (questionViewTextConfiguration != other.questionViewTextConfiguration) return false
     if (helpCardStateChangedCallback != other.helpCardStateChangedCallback) return false
+    if (isFlyoverCollapsed != other.isFlyoverCollapsed) return false
+    if (flyoverStateChangedCallback != other.flyoverStateChangedCallback) return false
 
     return hasTheSameResponse(other)
   }
@@ -304,6 +309,8 @@ data class QuestionnaireViewItem(
     result = 31 * result + enabledDisplayItems.hashCode()
     result = 31 * result + questionViewTextConfiguration.hashCode()
     result = 31 * result + helpCardStateChangedCallback.hashCode()
+    result = 31 * result + isFlyoverCollapsed.hashCode()
+    result = 31 * result + flyoverStateChangedCallback.hashCode()
     return result
   }
 }

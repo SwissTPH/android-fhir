@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Google LLC
+ * Copyright 2025-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@
 package com.google.android.fhir.datacapture.views.compose
 
 import android.text.Spanned
+import android.text.TextUtils
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
@@ -52,6 +55,7 @@ import com.google.android.fhir.datacapture.extensions.applyCustomOrDefaultStyle
 import com.google.android.fhir.datacapture.extensions.getLocalizedInstructionsSpanned
 import com.google.android.fhir.datacapture.extensions.getStyleResIdFromAttribute
 import com.google.android.fhir.datacapture.extensions.hasHelpButton
+import com.google.android.fhir.datacapture.extensions.localizedFlyoverSpanned
 import com.google.android.fhir.datacapture.extensions.localizedHelpSpanned
 import com.google.android.fhir.datacapture.extensions.localizedPrefixSpanned
 import com.google.android.fhir.datacapture.extensions.readCustomStyleExtension
@@ -82,13 +86,20 @@ fun Header(
 
   val prefixLocalizedText = questionnaireViewItem.questionnaireItem.localizedPrefixSpanned
   val questionLocalizedText = appendAsteriskToQuestionText(context, questionnaireViewItem)
+  val flyoverLocalizedText = questionnaireViewItem.enabledDisplayItems.localizedFlyoverSpanned
   val hintLocalizedText =
     questionnaireViewItem.enabledDisplayItems.getLocalizedInstructionsSpanned()
   val itemLocalizedHelpSpanned = questionnaireItem.localizedHelpSpanned
 
   //  This is to avoid an empty row in the questionnaire.
   if (
-    listOf(prefixLocalizedText, questionLocalizedText, hintLocalizedText, itemLocalizedHelpSpanned)
+    listOf(
+        prefixLocalizedText,
+        questionLocalizedText,
+        flyoverLocalizedText,
+        hintLocalizedText,
+        itemLocalizedHelpSpanned,
+      )
       .any { !it.isNullOrBlank() } ||
       (showRequiredOrOptionalText && !requiredOptionalText.isNullOrBlank()) ||
       (displayValidationResult && validationResult is Invalid)
@@ -97,6 +108,14 @@ fun Header(
       prefixLocalizedText = prefixLocalizedText,
       questionLocalizedText = questionLocalizedText,
       readCustomStyleName = remember { { questionnaireItem.readCustomStyleExtension(it) } },
+      flyoverLocalizedText = flyoverLocalizedText,
+      isFlyoverCollapsed = questionnaireViewItem.isFlyoverCollapsed,
+      onFlyoverCollapsedChange = { isCollapsed ->
+        questionnaireViewItem.flyoverStateChangedCallback(
+          isCollapsed,
+          questionnaireViewItem.getQuestionnaireResponseItem(),
+        )
+      },
       hintLocalizedText = hintLocalizedText,
       isHelpCardOpen = questionnaireViewItem.isHelpCardOpen,
       isHelpButtonVisible = questionnaireItem.hasHelpButton,
@@ -117,6 +136,9 @@ internal fun Header(
   prefixLocalizedText: Spanned?,
   questionLocalizedText: Spanned,
   readCustomStyleName: (StyleUrl) -> String?,
+  flyoverLocalizedText: Spanned?,
+  isFlyoverCollapsed: Boolean,
+  onFlyoverCollapsedChange: (Boolean) -> Unit,
   hintLocalizedText: Spanned?,
   isHelpCardOpen: Boolean,
   isHelpButtonVisible: Boolean,
@@ -134,6 +156,15 @@ internal fun Header(
         .testTag(HEADER_TAG),
   ) {
     PrefixQuestionTitle(prefixLocalizedText, questionLocalizedText, readCustomStyleName)
+
+    if (!flyoverLocalizedText.isNullOrBlank()) {
+      Flyover(
+        flyoverLocalizedText,
+        readCustomStyleName,
+        isFlyoverCollapsed,
+        onFlyoverCollapsedChange,
+      )
+    }
 
     if (!hintLocalizedText.isNullOrBlank() || isHelpButtonVisible || isHelpCardOpen) {
       Help(
@@ -210,6 +241,60 @@ internal fun PrefixQuestionTitle(
       },
       modifier = Modifier.weight(1f),
       update = { it.text = questionLocalizedText },
+    )
+  }
+}
+
+@Composable
+internal fun Flyover(
+  flyoverLocalizedText: Spanned,
+  readCustomStyleName: (StyleUrl) -> String?,
+  isCollapsed: Boolean,
+  onCollapsedChange: (Boolean) -> Unit,
+) {
+  val expanded = !isCollapsed
+
+  Row(
+    modifier =
+      Modifier.fillMaxWidth()
+        .padding(top = dimensionResource(R.dimen.help_container_margin_top))
+        .clickable { onCollapsedChange(expanded) }
+        .testTag(FLYOVER_TAG),
+    verticalAlignment = Alignment.Top,
+  ) {
+    AndroidView(
+      modifier = Modifier.weight(1f),
+      factory = {
+        TextView(it).apply {
+          id = R.id.flyover_text
+          movementMethod = LinkMovementMethod.getInstance()
+          applyCustomOrDefaultStyle(
+            context = it,
+            view = this,
+            customStyleName = readCustomStyleName(StyleUrl.FLYOVER_TEXT_VIEW),
+            defaultStyleResId =
+              getStyleResIdFromAttribute(it, R.attr.questionnaireFlyoverTextStyle),
+          )
+        }
+      },
+      update = { textView ->
+        textView.text = flyoverLocalizedText
+        textView.maxLines = if (expanded) Integer.MAX_VALUE else 1
+        textView.ellipsize = if (expanded) null else TextUtils.TruncateAt.END
+      },
+    )
+    Icon(
+      painterResource(R.drawable.expand_more_24px),
+      contentDescription =
+        stringResource(if (expanded) R.string.flyover_collapse else R.string.flyover_expand),
+      modifier =
+        Modifier.padding(start = dimensionResource(R.dimen.help_button_margin_start))
+          .size(
+            width = dimensionResource(R.dimen.help_button_width),
+            height = dimensionResource(R.dimen.help_button_height),
+          )
+          .rotate(if (expanded) 180f else 0f)
+          .testTag(FLYOVER_EXPAND_ICON_TAG),
     )
   }
 }
@@ -305,3 +390,5 @@ const val ERROR_TEXT_AT_HEADER_TEST_TAG = "error_text_at_header"
 const val HELP_BUTTON_TAG = "helpButton"
 const val HELP_CARD_TAG = "helpCardView"
 const val HEADER_TAG = "headerView"
+const val FLYOVER_TAG = "flyoverView"
+const val FLYOVER_EXPAND_ICON_TAG = "flyoverExpandIcon"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import android.content.Context
 import android.text.method.LinkMovementMethod
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.fhir.datacapture.QuestionnaireViewHolderType
@@ -27,7 +28,9 @@ import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.extensions.applyCustomOrDefaultStyle
 import com.google.android.fhir.datacapture.extensions.getHeaderViewVisibility
 import com.google.android.fhir.datacapture.extensions.getLocalizedInstructionsSpanned
+import com.google.android.fhir.datacapture.extensions.initFlyoverViews
 import com.google.android.fhir.datacapture.extensions.initHelpViews
+import com.google.android.fhir.datacapture.extensions.localizedFlyoverSpanned
 import com.google.android.fhir.datacapture.extensions.localizedPrefixSpanned
 import com.google.android.fhir.datacapture.extensions.updateTextAndVisibility
 
@@ -43,6 +46,7 @@ class GroupHeaderView(context: Context, attrs: AttributeSet?) : LinearLayout(con
 
   private val prefix = findViewById<TextView>(R.id.prefix)
   private val question = findViewById<TextView>(R.id.question)
+  private val flyoverText = findViewById<TextView>(R.id.flyover_text)
   private val hint = findViewById<TextView>(R.id.hint)
 
   fun bind(questionnaireViewItem: QuestionnaireViewItem) {
@@ -61,17 +65,31 @@ class GroupHeaderView(context: Context, attrs: AttributeSet?) : LinearLayout(con
       updateTextAndVisibility(questionnaireViewItem.questionText)
       movementMethod = LinkMovementMethod.getInstance()
     }
+    initFlyoverViews(
+      flyoverContainer = findViewById(R.id.flyover_container),
+      flyoverTextView = flyoverText,
+      flyoverExpandIcon = findViewById<ImageView>(R.id.flyover_expand_icon),
+      flyoverSpanned = questionnaireViewItem.enabledDisplayItems.localizedFlyoverSpanned,
+      isFlyoverInitiallyCollapsed = questionnaireViewItem.isFlyoverCollapsed,
+      flyoverStateChangedCallback = { isCollapsed ->
+        questionnaireViewItem.flyoverStateChangedCallback(
+          isCollapsed,
+          questionnaireViewItem.getQuestionnaireResponseItem(),
+        )
+      },
+    )
     hint.apply {
       updateTextAndVisibility(
         questionnaireViewItem.enabledDisplayItems.getLocalizedInstructionsSpanned(),
       )
       movementMethod = LinkMovementMethod.getInstance()
     }
-    visibility = getHeaderViewVisibility(prefix, question, hint)
+    visibility = getHeaderViewVisibility(prefix, question, flyoverText, hint)
     applyCustomOrDefaultStyle(
       questionnaireViewItem.questionnaireItem,
       prefixTextView = prefix,
       questionTextView = question,
+      flyoverTextView = flyoverText,
       instructionTextView = hint,
     )
   }

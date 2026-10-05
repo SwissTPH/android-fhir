@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Google LLC
+ * Copyright 2025-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.google.android.fhir.datacapture.validation.Valid
 import com.google.android.fhir.datacapture.views.QuestionTextConfiguration
 import com.google.android.fhir.datacapture.views.QuestionnaireViewItem
 import com.google.android.fhir.datacapture.views.compose.ERROR_TEXT_AT_HEADER_TEST_TAG
+import com.google.android.fhir.datacapture.views.compose.FLYOVER_TAG
 import com.google.android.fhir.datacapture.views.compose.HEADER_TAG
 import com.google.android.fhir.datacapture.views.compose.HELP_BUTTON_TAG
 import com.google.android.fhir.datacapture.views.compose.HELP_CARD_TAG
@@ -177,6 +178,75 @@ class HeaderTest {
     composeTestRule.setContent { Header(questionnaireViewItem) }
 
     assertThat(composeTestRule.activity.findViewById<TextView?>(R.id.hint)).isNull()
+  }
+
+  @Test
+  fun showsFlyoverBelowTheQuestion() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    val questionnaireViewItem =
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      )
+
+    composeTestRule.setContent { Header(questionnaireViewItem) }
+
+    composeTestRule.onNodeWithTag(FLYOVER_TAG).assertIsDisplayed()
+    assertThat(composeTestRule.activity.findViewById<TextView>(R.id.flyover_text).text.toString())
+      .isEqualTo("flyover text")
+  }
+
+  @Test
+  fun hidesFlyoverWhenNotPresent() {
+    val questionnaireViewItem =
+      getQuestionnaireViewItemWithQuestionnaireItem(
+        Questionnaire.QuestionnaireItemComponent().apply { text = "Question?" },
+      )
+
+    composeTestRule.setContent { Header(questionnaireViewItem) }
+
+    composeTestRule.onNodeWithTag(FLYOVER_TAG).assertDoesNotExist()
+  }
+
+  @Test
+  fun collapsesFlyoverOnTap() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    val questionnaireViewItem =
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      )
+
+    composeTestRule.setContent { Header(questionnaireViewItem) }
+
+    assertThat(composeTestRule.activity.findViewById<TextView>(R.id.flyover_text).maxLines)
+      .isEqualTo(Integer.MAX_VALUE)
+    composeTestRule.onNodeWithTag(FLYOVER_TAG).performClick()
+    composeTestRule.waitForIdle()
+    assertThat(composeTestRule.activity.findViewById<TextView>(R.id.flyover_text).maxLines)
+      .isEqualTo(1)
   }
 
   @Test
@@ -466,6 +536,22 @@ class HeaderTest {
             listOf(
               Coding().apply {
                 code = DisplayItemControlType.HELP.extensionCode
+                system = EXTENSION_ITEM_CONTROL_SYSTEM
+              },
+            )
+        },
+      )
+    }
+
+  private val itemControlExtensionWithFlyoverCode =
+    Extension().apply {
+      url = EXTENSION_ITEM_CONTROL_URL
+      setValue(
+        CodeableConcept().apply {
+          coding =
+            listOf(
+              Coding().apply {
+                code = DisplayItemControlType.FLYOVER.extensionCode
                 system = EXTENSION_ITEM_CONTROL_SYSTEM
               },
             )

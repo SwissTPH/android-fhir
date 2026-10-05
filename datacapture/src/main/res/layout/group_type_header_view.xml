@@ -29,12 +29,49 @@
     />
 
   <LinearLayout
+        android:id="@+id/flyover_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/help_container_margin_top"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="top"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/question"
+    >
+    <TextView
+            android:id="@+id/flyover_text"
+            style="?attr/questionnaireFlyoverTextStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            tools:text="Flyover text"
+        />
+    <ImageView
+            android:id="@+id/flyover_expand_icon"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_gravity="top"
+            android:layout_marginStart="@dimen/help_button_margin_start"
+            android:contentDescription="@string/flyover_collapse"
+            android:importantForAccessibility="no"
+            android:src="@drawable/expand_more_24px"
+        />
+  </LinearLayout>
+
+  <LinearLayout
         android:id="@+id/helpContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/help_container_margin_top"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/question"
+        app:layout_constraintTop_toBottomOf="@id/flyover_container"
         app:layout_constraintStart_toStartOf="parent"
     >
 

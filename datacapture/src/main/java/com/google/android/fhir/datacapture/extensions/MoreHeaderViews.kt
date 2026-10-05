@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import android.content.Context
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.views.QuestionnaireViewItem
@@ -90,6 +92,59 @@ fun initHelpViews(
 }
 
 /**
+ * Shows [flyoverSpanned] as a collapsible caption just below the question, using the smaller
+ * flyover text appearance. There is no hover on Android, so this is the SDC flyover control on
+ * mobile: expanded by default, collapsed to one line on tap.
+ *
+ * The collapsed state is owned by the caller, not by the view, because the header is recycled.
+ * [isFlyoverInitiallyCollapsed] restores it on bind and [flyoverStateChangedCallback] reports every
+ * change back so it survives scrolling.
+ */
+fun initFlyoverViews(
+  flyoverContainer: View,
+  flyoverTextView: TextView,
+  flyoverExpandIcon: ImageView,
+  flyoverSpanned: Spanned?,
+  isFlyoverInitiallyCollapsed: Boolean = false,
+  flyoverStateChangedCallback: (Boolean) -> Unit = {},
+) {
+  val hasFlyover = !flyoverSpanned.isNullOrEmpty()
+  flyoverContainer.visibility = if (hasFlyover) VISIBLE else GONE
+  if (!hasFlyover) {
+    flyoverContainer.setOnClickListener(null)
+    flyoverTextView.updateTextAndVisibility(null)
+    return
+  }
+  flyoverTextView.apply {
+    updateTextAndVisibility(flyoverSpanned)
+    movementMethod = LinkMovementMethod.getInstance()
+  }
+  var isCollapsed = isFlyoverInitiallyCollapsed
+  flyoverContainer.applyFlyoverCollapsedState(flyoverTextView, flyoverExpandIcon, isCollapsed)
+  flyoverContainer.setOnClickListener {
+    isCollapsed = !isCollapsed
+    flyoverContainer.applyFlyoverCollapsedState(flyoverTextView, flyoverExpandIcon, isCollapsed)
+    flyoverStateChangedCallback(isCollapsed)
+  }
+}
+
+/** Applies [isCollapsed] to the flyover caption, its chevron and the container's announcement. */
+private fun View.applyFlyoverCollapsedState(
+  flyoverTextView: TextView,
+  flyoverExpandIcon: ImageView,
+  isCollapsed: Boolean,
+) {
+  flyoverTextView.maxLines = if (isCollapsed) 1 else Integer.MAX_VALUE
+  flyoverExpandIcon.rotation =
+    if (isCollapsed) COLLAPSED_FLYOVER_ICON_ROTATION else EXPANDED_FLYOVER_ICON_ROTATION
+  contentDescription =
+    context.getString(if (isCollapsed) R.string.flyover_expand else R.string.flyover_collapse)
+}
+
+private const val COLLAPSED_FLYOVER_ICON_ROTATION = 0f
+private const val EXPANDED_FLYOVER_ICON_ROTATION = 180f
+
+/**
  * Appends ' *' to [Questionnaire.QuestionnaireItemComponent.localizedTextSpanned] text if
  * [Questionnaire.QuestionnaireItemComponent.required] is true.
  */
@@ -113,6 +168,7 @@ internal fun applyCustomOrDefaultStyle(
   questionnaireItem: Questionnaire.QuestionnaireItemComponent,
   prefixTextView: TextView,
   questionTextView: TextView,
+  flyoverTextView: TextView,
   instructionTextView: TextView,
 ) {
   applyCustomOrDefaultStyle(
@@ -134,6 +190,16 @@ internal fun applyCustomOrDefaultStyle(
       ),
     defaultStyleResId =
       getStyleResIdFromAttribute(questionTextView.context, R.attr.questionnaireQuestionTextStyle),
+  )
+  applyCustomOrDefaultStyle(
+    context = flyoverTextView.context,
+    view = flyoverTextView,
+    customStyleName =
+      questionnaireItem.readCustomStyleExtension(
+        StyleUrl.FLYOVER_TEXT_VIEW,
+      ),
+    defaultStyleResId =
+      getStyleResIdFromAttribute(flyoverTextView.context, R.attr.questionnaireFlyoverTextStyle),
   )
   applyCustomOrDefaultStyle(
     context = instructionTextView.context,

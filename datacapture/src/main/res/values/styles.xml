@@ -57,6 +57,10 @@
         >@style/TextAppearance.Material3.BodyMedium
         </item>
         <item
+            name="questionnaireFlyoverTextStyle"
+        >@style/Questionnaire.FlyoverTextStyle
+        </item>
+        <item
             name="questionnaireHelpHeaderStyle"
         >@style/TextAppearance.Material3.TitleSmall</item>
         <item
@@ -271,6 +275,16 @@
         parent="Widget.Material3.MaterialDivider"
     >
       <item name="android:alpha">0.5</item>
+    </style>
+
+    <style
+        name="Questionnaire.FlyoverTextStyle"
+        parent="TextAppearance.Material3.BodySmall"
+    >
+        <!-- TextAppearance.Material3.BodySmall inherits ?android:textColorSecondary, which apps are
+             free to repurpose for e.g. a dark action bar. Pin the caption colour to the surface it
+             is actually drawn on so the flyover cannot end up invisible. -->
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style

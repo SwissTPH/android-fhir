@@ -92,7 +92,7 @@ The [`itemControl`](https://build.fhir.org/ig/HL7/fhir-extensions/ValueSet-quest
 | Item control  | Compatible item type | Example | Notes                                         | Image |
 |:--------------|:---------------------|:--------|:----------------------------------------------|:-----:|
 | Page          | Group                | [JSON](https://github.com/google/android-fhir/blob/master/catalog/src/main/assets/layout_paginated.json)              |                                               | |
-| Fly-over      | Display              |         |                                               |
+| Fly-over      | Display              |         | Collapsible caption just below the question (smaller type). Also used as the text-field placeholder. |
 | Help-Button   | Display              | [JSON](https://github.com/google/android-fhir/blob/master/catalog/src/main/assets/component_help.json)                |                                               | |
 | Auto-complete | Choice               | [JSON](https://github.com/google/android-fhir/blob/master/catalog/src/main/assets/component_auto_complete.json)       | Filter-forward based on inlined answerOptions | |
 | Drop down | Choice               | [JSON](https://github.com/google/android-fhir/blob/master/catalog/src/main/assets/component_dropdown.json)            | Default for 4 or more answer options          | ![Drop Down](sdc-ref-dropdown.png) |

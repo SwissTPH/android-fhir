@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import android.content.Context
 import android.text.method.LinkMovementMethod
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.VisibleForTesting
@@ -28,7 +29,9 @@ import com.google.android.fhir.datacapture.extensions.appendAsteriskToQuestionTe
 import com.google.android.fhir.datacapture.extensions.applyCustomOrDefaultStyle
 import com.google.android.fhir.datacapture.extensions.getHeaderViewVisibility
 import com.google.android.fhir.datacapture.extensions.getLocalizedInstructionsSpanned
+import com.google.android.fhir.datacapture.extensions.initFlyoverViews
 import com.google.android.fhir.datacapture.extensions.initHelpViews
+import com.google.android.fhir.datacapture.extensions.localizedFlyoverSpanned
 import com.google.android.fhir.datacapture.extensions.localizedPrefixSpanned
 import com.google.android.fhir.datacapture.extensions.updateTextAndVisibility
 import com.google.android.fhir.datacapture.validation.Invalid
@@ -46,6 +49,7 @@ class HeaderView(context: Context, attrs: AttributeSet?) : LinearLayout(context,
 
   private val prefix = findViewById<TextView>(R.id.prefix)
   private val question = findViewById<TextView>(R.id.question)
+  private val flyoverText = findViewById<TextView>(R.id.flyover_text)
   private val hint = findViewById<TextView>(R.id.hint)
   private val errorTextView = findViewById<TextView>(R.id.error_text_at_header)
   private val requiredOptionalTextView = findViewById<TextView>(R.id.required_optional_text)
@@ -70,6 +74,19 @@ class HeaderView(context: Context, attrs: AttributeSet?) : LinearLayout(context,
       updateTextAndVisibility(appendAsteriskToQuestionText(question.context, questionnaireViewItem))
       movementMethod = LinkMovementMethod.getInstance()
     }
+    initFlyoverViews(
+      flyoverContainer = findViewById(R.id.flyover_container),
+      flyoverTextView = flyoverText,
+      flyoverExpandIcon = findViewById<ImageView>(R.id.flyover_expand_icon),
+      flyoverSpanned = questionnaireViewItem.enabledDisplayItems.localizedFlyoverSpanned,
+      isFlyoverInitiallyCollapsed = questionnaireViewItem.isFlyoverCollapsed,
+      flyoverStateChangedCallback = { isCollapsed ->
+        questionnaireViewItem.flyoverStateChangedCallback(
+          isCollapsed,
+          questionnaireViewItem.getQuestionnaireResponseItem(),
+        )
+      },
+    )
     hint.apply {
       updateTextAndVisibility(
         questionnaireViewItem.enabledDisplayItems.getLocalizedInstructionsSpanned(),
@@ -78,11 +95,12 @@ class HeaderView(context: Context, attrs: AttributeSet?) : LinearLayout(context,
     }
     // Make the entire view GONE if there is nothing to show. This is to avoid an empty row in the
     // questionnaire.
-    visibility = getHeaderViewVisibility(prefix, question, hint)
+    visibility = getHeaderViewVisibility(prefix, question, flyoverText, hint)
     applyCustomOrDefaultStyle(
       questionnaireViewItem.questionnaireItem,
       prefixTextView = prefix,
       questionTextView = question,
+      flyoverTextView = flyoverText,
       instructionTextView = hint,
     )
 

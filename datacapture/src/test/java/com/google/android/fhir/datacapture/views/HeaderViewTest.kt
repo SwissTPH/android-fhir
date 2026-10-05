@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,152 @@ class HeaderViewTest {
     assertThat(view.findViewById<TextView>(R.id.hint).isVisible).isTrue()
     assertThat(view.findViewById<TextView>(R.id.hint).text.toString()).isEqualTo("subtitle text")
   }
+
+  @Test
+  fun `shows flyover below the question`() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      ),
+    )
+
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).isVisible).isTrue()
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).text.toString())
+      .isEqualTo("flyover text")
+    assertThat(view.findViewById<View>(R.id.flyover_container).isVisible).isTrue()
+  }
+
+  @Test
+  fun `hides flyover when not present`() {
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItem(
+        Questionnaire.QuestionnaireItemComponent().apply { text = "Question?" },
+      ),
+    )
+
+    assertThat(view.findViewById<View>(R.id.flyover_container).isVisible).isFalse()
+  }
+
+  @Test
+  fun `shows header when only flyover is present`() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply { item = itemList },
+        itemList,
+      ),
+    )
+
+    assertThat(view.visibility).isEqualTo(View.VISIBLE)
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).isVisible).isTrue()
+  }
+
+  @Test
+  fun `collapses flyover to one line on tap`() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "flyover text"
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      ),
+    )
+
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).maxLines).isEqualTo(Integer.MAX_VALUE)
+    view.findViewById<View>(R.id.flyover_container).performClick()
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).maxLines).isEqualTo(1)
+    view.findViewById<View>(R.id.flyover_container).performClick()
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).maxLines).isEqualTo(Integer.MAX_VALUE)
+  }
+
+  @Test
+  fun `restores collapsed flyover on rebind`() {
+    val itemList = flyoverDisplayItems()
+
+    view.bind(
+      QuestionnaireViewItem(
+        questionnaireItem =
+          Questionnaire.QuestionnaireItemComponent().apply {
+            text = "Question?"
+            item = itemList
+          },
+        questionnaireResponseItem = QuestionnaireResponse.QuestionnaireResponseItemComponent(),
+        validationResult = Valid,
+        answersChangedCallback = { _, _, _, _ -> },
+        enabledDisplayItems = itemList,
+        isFlyoverCollapsed = true,
+      ),
+    )
+
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).maxLines).isEqualTo(1)
+  }
+
+  @Test
+  fun `reports flyover collapsed state when tapped`() {
+    val itemList = flyoverDisplayItems()
+    val reported = mutableListOf<Boolean>()
+
+    view.bind(
+      QuestionnaireViewItem(
+        questionnaireItem =
+          Questionnaire.QuestionnaireItemComponent().apply {
+            text = "Question?"
+            item = itemList
+          },
+        questionnaireResponseItem = QuestionnaireResponse.QuestionnaireResponseItemComponent(),
+        validationResult = Valid,
+        answersChangedCallback = { _, _, _, _ -> },
+        enabledDisplayItems = itemList,
+        flyoverStateChangedCallback = { isCollapsed, _ -> reported.add(isCollapsed) },
+      ),
+    )
+
+    view.findViewById<View>(R.id.flyover_container).performClick()
+    view.findViewById<View>(R.id.flyover_container).performClick()
+
+    assertThat(reported).containsExactly(true, false).inOrder()
+  }
+
+  private fun flyoverDisplayItems() =
+    listOf(
+      Questionnaire.QuestionnaireItemComponent().apply {
+        linkId = "nested-flyover"
+        text = "flyover text"
+        extension = listOf(itemControlExtensionWithFlyoverCode)
+        type = Questionnaire.QuestionnaireItemType.DISPLAY
+      },
+    )
 
   @Test
   fun `hides instructions`() {
@@ -388,6 +534,22 @@ class HeaderViewTest {
             listOf(
               Coding().apply {
                 code = DisplayItemControlType.HELP.extensionCode
+                system = EXTENSION_ITEM_CONTROL_SYSTEM
+              },
+            )
+        },
+      )
+    }
+
+  private val itemControlExtensionWithFlyoverCode =
+    Extension().apply {
+      url = EXTENSION_ITEM_CONTROL_URL
+      setValue(
+        CodeableConcept().apply {
+          coding =
+            listOf(
+              Coding().apply {
+                code = DisplayItemControlType.FLYOVER.extensionCode
                 system = EXTENSION_ITEM_CONTROL_SYSTEM
               },
             )

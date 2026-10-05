@@ -72,6 +72,7 @@ internal enum class StyleUrl(val url: String) {
   PREFIX_TEXT_VIEW("prefix_text_view"),
   QUESTION_TEXT_VIEW("question_text_view"),
   SUBTITLE_TEXT_VIEW("subtitle_text_view"),
+  FLYOVER_TEXT_VIEW("flyover_text_view"),
 }
 
 // Below URLs exist and are supported by HL7
