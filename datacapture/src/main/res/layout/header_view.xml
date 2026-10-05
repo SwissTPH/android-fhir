@@ -60,7 +60,7 @@
             android:layout_height="@dimen/help_button_height"
             android:layout_gravity="top"
             android:layout_marginStart="@dimen/help_button_margin_start"
-            android:contentDescription="@string/flyover_collapse"
+            android:contentDescription="@null"
             android:importantForAccessibility="no"
             android:src="@drawable/expand_more_24px"
         />

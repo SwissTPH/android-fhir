@@ -40,8 +40,11 @@
     <!-- 2.1 All Widgets -->
     <string name="not_answered">"Not Answered"</string>
     <string name="help">Help</string>
-    <string name="flyover_collapse">Hide flyover</string>
-    <string name="flyover_expand">Show flyover</string>
+    <!-- Accessibility action labels and state for the collapsible flyover caption. -->
+    <string name="flyover_action_collapse">Collapse</string>
+    <string name="flyover_action_expand">Expand</string>
+    <string name="flyover_state_collapsed">Collapsed</string>
+    <string name="flyover_state_expanded">Expanded</string>
 
     <!-- 2.2 Boolean -->
     <string name="no">No</string>

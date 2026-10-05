@@ -20,6 +20,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.extensions.DisplayItemControlType
@@ -307,6 +308,75 @@ class HeaderViewTest {
     view.findViewById<View>(R.id.flyover_container).performClick()
 
     assertThat(reported).containsExactly(true, false).inOrder()
+  }
+
+  @Test
+  fun `collapses flyover when the caption itself is tapped`() {
+    val itemList = flyoverDisplayItems()
+
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      ),
+    )
+
+    // The caption is clickable because of its movement method, so it must carry the toggle too.
+    view.findViewById<TextView>(R.id.flyover_text).performClick()
+
+    assertThat(view.findViewById<TextView>(R.id.flyover_text).maxLines).isEqualTo(1)
+  }
+
+  @Test
+  fun `hides flyover when it is blank`() {
+    val itemList =
+      listOf(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          linkId = "nested-flyover"
+          text = "   "
+          extension = listOf(itemControlExtensionWithFlyoverCode)
+          type = Questionnaire.QuestionnaireItemType.DISPLAY
+        },
+      )
+
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      ),
+    )
+
+    assertThat(view.findViewById<View>(R.id.flyover_container).isVisible).isFalse()
+  }
+
+  @Test
+  fun `describes flyover state to accessibility services`() {
+    val itemList = flyoverDisplayItems()
+
+    view.bind(
+      getQuestionnaireViewItemWithQuestionnaireItemAndEnabledDisplayItems(
+        Questionnaire.QuestionnaireItemComponent().apply {
+          text = "Question?"
+          item = itemList
+        },
+        itemList,
+      ),
+    )
+    val container = view.findViewById<View>(R.id.flyover_container)
+
+    assertThat(ViewCompat.getStateDescription(container).toString()).isEqualTo("Expanded")
+    // The caption is read out on its own, so the container must not describe itself instead.
+    assertThat(container.contentDescription).isNull()
+
+    container.performClick()
+
+    assertThat(ViewCompat.getStateDescription(container).toString()).isEqualTo("Collapsed")
   }
 
   private fun flyoverDisplayItems() =

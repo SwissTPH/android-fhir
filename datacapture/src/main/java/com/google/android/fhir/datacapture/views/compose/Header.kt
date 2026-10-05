@@ -46,6 +46,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.fhir.datacapture.R
@@ -256,15 +258,25 @@ internal fun Flyover(
   // deriving `expanded` from the parameter alone would never recompose on tap.
   var isCollapsed by remember(isInitiallyCollapsed) { mutableStateOf(isInitiallyCollapsed) }
   val expanded = !isCollapsed
+  val toggle = {
+    isCollapsed = !isCollapsed
+    onCollapsedChange(isCollapsed)
+  }
+  val actionLabel =
+    stringResource(
+      if (expanded) R.string.flyover_action_collapse else R.string.flyover_action_expand,
+    )
+  val state =
+    stringResource(
+      if (expanded) R.string.flyover_state_expanded else R.string.flyover_state_collapsed,
+    )
 
   Row(
     modifier =
       Modifier.fillMaxWidth()
         .padding(top = dimensionResource(R.dimen.help_container_margin_top))
-        .clickable {
-          isCollapsed = !isCollapsed
-          onCollapsedChange(isCollapsed)
-        }
+        .clickable(onClickLabel = actionLabel) { toggle() }
+        .semantics { stateDescription = state }
         .testTag(FLYOVER_TAG),
     verticalAlignment = Alignment.Top,
   ) {
@@ -287,12 +299,14 @@ internal fun Flyover(
         textView.text = flyoverLocalizedText
         textView.maxLines = if (expanded) Integer.MAX_VALUE else 1
         textView.ellipsize = if (expanded) null else TextUtils.TruncateAt.END
+        // The caption is clickable because of its movement method, so it consumes taps that would
+        // otherwise reach the Row above.
+        textView.setOnClickListener { toggle() }
       },
     )
     Icon(
       painterResource(R.drawable.expand_more_24px),
-      contentDescription =
-        stringResource(if (expanded) R.string.flyover_collapse else R.string.flyover_expand),
+      contentDescription = null,
       modifier =
         Modifier.padding(start = dimensionResource(R.dimen.help_button_margin_start))
           .size(

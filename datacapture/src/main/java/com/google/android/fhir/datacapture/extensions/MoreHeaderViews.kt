@@ -26,6 +26,8 @@ import android.view.View.VISIBLE
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.views.QuestionnaireViewItem
 import com.google.android.material.card.MaterialCardView
@@ -108,27 +110,40 @@ fun initFlyoverViews(
   isFlyoverInitiallyCollapsed: Boolean = false,
   flyoverStateChangedCallback: (Boolean) -> Unit = {},
 ) {
-  val hasFlyover = !flyoverSpanned.isNullOrEmpty()
+  val hasFlyover = !flyoverSpanned.isNullOrBlank()
   flyoverContainer.visibility = if (hasFlyover) VISIBLE else GONE
   if (!hasFlyover) {
     flyoverContainer.setOnClickListener(null)
+    flyoverTextView.setOnClickListener(null)
     flyoverTextView.updateTextAndVisibility(null)
     return
   }
   flyoverTextView.apply {
     updateTextAndVisibility(flyoverSpanned)
+    // Makes the caption clickable, so it swallows taps; the toggle below is set on it as well,
+    // otherwise only the chevron and the row's padding would respond. A tap on a link is consumed
+    // by the movement method first and does not toggle.
     movementMethod = LinkMovementMethod.getInstance()
   }
   var isCollapsed = isFlyoverInitiallyCollapsed
   flyoverContainer.applyFlyoverCollapsedState(flyoverTextView, flyoverExpandIcon, isCollapsed)
-  flyoverContainer.setOnClickListener {
-    isCollapsed = !isCollapsed
-    flyoverContainer.applyFlyoverCollapsedState(flyoverTextView, flyoverExpandIcon, isCollapsed)
-    flyoverStateChangedCallback(isCollapsed)
-  }
+  val toggle =
+    View.OnClickListener {
+      isCollapsed = !isCollapsed
+      flyoverContainer.applyFlyoverCollapsedState(flyoverTextView, flyoverExpandIcon, isCollapsed)
+      flyoverStateChangedCallback(isCollapsed)
+    }
+  flyoverContainer.setOnClickListener(toggle)
+  flyoverTextView.setOnClickListener(toggle)
 }
 
-/** Applies [isCollapsed] to the flyover caption, its chevron and the container's announcement. */
+/**
+ * Applies [isCollapsed] to the flyover caption and its chevron, and describes the state to
+ * accessibility services.
+ *
+ * The caption itself is left to be read out, so the state goes in a state description and the tap
+ * in an action label rather than in a content description that would replace the text.
+ */
 private fun View.applyFlyoverCollapsedState(
   flyoverTextView: TextView,
   flyoverExpandIcon: ImageView,
@@ -137,8 +152,20 @@ private fun View.applyFlyoverCollapsedState(
   flyoverTextView.maxLines = if (isCollapsed) 1 else Integer.MAX_VALUE
   flyoverExpandIcon.rotation =
     if (isCollapsed) COLLAPSED_FLYOVER_ICON_ROTATION else EXPANDED_FLYOVER_ICON_ROTATION
-  contentDescription =
-    context.getString(if (isCollapsed) R.string.flyover_expand else R.string.flyover_collapse)
+  ViewCompat.setStateDescription(
+    this,
+    context.getString(
+      if (isCollapsed) R.string.flyover_state_collapsed else R.string.flyover_state_expanded,
+    ),
+  )
+  ViewCompat.replaceAccessibilityAction(
+    this,
+    AccessibilityActionCompat.ACTION_CLICK,
+    context.getString(
+      if (isCollapsed) R.string.flyover_action_expand else R.string.flyover_action_collapse,
+    ),
+    null,
+  )
 }
 
 private const val COLLAPSED_FLYOVER_ICON_ROTATION = 0f
