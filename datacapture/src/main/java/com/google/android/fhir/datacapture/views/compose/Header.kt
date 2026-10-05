@@ -161,8 +161,8 @@ internal fun Header(
       Flyover(
         flyoverLocalizedText,
         readCustomStyleName,
-        isFlyoverCollapsed,
-        onFlyoverCollapsedChange,
+        isInitiallyCollapsed = isFlyoverCollapsed,
+        onCollapsedChange = onFlyoverCollapsedChange,
       )
     }
 
@@ -249,16 +249,22 @@ internal fun PrefixQuestionTitle(
 internal fun Flyover(
   flyoverLocalizedText: Spanned,
   readCustomStyleName: (StyleUrl) -> String?,
-  isCollapsed: Boolean,
+  isInitiallyCollapsed: Boolean,
   onCollapsedChange: (Boolean) -> Unit,
 ) {
+  // Local state drives this composition; onCollapsedChange only persists it in the view model, so
+  // deriving `expanded` from the parameter alone would never recompose on tap.
+  var isCollapsed by remember(isInitiallyCollapsed) { mutableStateOf(isInitiallyCollapsed) }
   val expanded = !isCollapsed
 
   Row(
     modifier =
       Modifier.fillMaxWidth()
         .padding(top = dimensionResource(R.dimen.help_container_margin_top))
-        .clickable { onCollapsedChange(expanded) }
+        .clickable {
+          isCollapsed = !isCollapsed
+          onCollapsedChange(isCollapsed)
+        }
         .testTag(FLYOVER_TAG),
     verticalAlignment = Alignment.Top,
   ) {
