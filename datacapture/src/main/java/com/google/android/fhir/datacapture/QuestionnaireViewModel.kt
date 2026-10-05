@@ -69,7 +69,9 @@ import com.google.android.fhir.datacapture.validation.Valid
 import com.google.android.fhir.datacapture.validation.ValidationResult
 import com.google.android.fhir.datacapture.views.QuestionTextConfiguration
 import com.google.android.fhir.datacapture.views.QuestionnaireViewItem
+import java.util.Collections
 import java.util.Date
+import java.util.IdentityHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -802,6 +804,21 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
    *
    * The traverse is carried out in the two lists in tandem.
    */
+  /**
+   * Drops per-item UI state for response items that are no longer in the questionnaire response.
+   *
+   * The sets below are keyed on [QuestionnaireResponseItemComponent] identity. Deleting a repeated
+   * group drops its response items, and without this the entries would be unreachable yet pin the
+   * old item tree for as long as this view model lives.
+   */
+  private fun discardPerItemUiStateForRemovedItems() {
+    val presentItems =
+      Collections.newSetFromMap(IdentityHashMap<QuestionnaireResponseItemComponent, Boolean>())
+    presentItems.addAll(questionnaireResponse.allItems)
+    openedHelpCardSet.retainAll(presentItems)
+    collapsedFlyoverSet.retainAll(presentItems)
+  }
+
   private suspend fun getQuestionnaireState(): QuestionnaireState =
     try {
       // Answers only change between state computations - calculated expressions, the only writers,
@@ -815,6 +832,7 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
   private suspend fun computeQuestionnaireState(): QuestionnaireState {
     val questionnaireItemList = questionnaire.item
     val questionnaireResponseItemList = questionnaireResponse.item
+    discardPerItemUiStateForRemovedItems()
 
     // Only display items on the current page while editing a paginated questionnaire, otherwise,
     // display all items.
