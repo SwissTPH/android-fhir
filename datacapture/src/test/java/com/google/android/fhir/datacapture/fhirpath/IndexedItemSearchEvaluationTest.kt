@@ -182,8 +182,7 @@ class IndexedItemSearchEvaluationTest {
       }
       .map { it.describe() }
 
-  private fun Base.describe() =
-    if (isPrimitive) "${fhirType()}:${primitiveValue()}" else fhirType()
+  private fun Base.describe() = if (isPrimitive) "${fhirType()}:${primitiveValue()}" else fhirType()
 
   /**
    * A response holding what makes `repeat(item)` and a link ID index differ: two instances of a

@@ -261,11 +261,11 @@ internal class EnablementEvaluator(
 
     // The positions of the candidates, ascending, so that the ones preceding the origin and the
     // ones succeeding it are separated by where the origin's own position falls among them.
-    val candidateIndices =
-      questionnaireResponseItemPreOrderIndicesByLinkId[linkId] ?: return null
+    val candidateIndices = questionnaireResponseItemPreOrderIndicesByLinkId[linkId] ?: return null
     val originIndex = questionnaireResponseItemPreOrderIndexMap[origin] ?: -1
     val originPosition = candidateIndices.binarySearch(originIndex)
-    // The origin itself is neither preceding nor succeeding, so it is excluded from both, whether or
+    // The origin itself is neither preceding nor succeeding, so it is excluded from both, whether
+    // or
     // not it is a candidate.
     val precedingCount = if (originPosition >= 0) originPosition else -(originPosition + 1)
     val succeedingFrom = if (originPosition >= 0) originPosition + 1 else precedingCount

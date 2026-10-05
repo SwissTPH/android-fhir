@@ -180,7 +180,8 @@ class QuestionnaireExpressionPerformanceBenchmark {
     log("=== Engine-only 3-item expression, $itemCount response items ===")
     val oneRepeat = threeItemExpression(Dataset.Repeat, "q000", "q001", "q002")
     val oneFull = threeItemExpression(Dataset.Full, "q000", "q001", "q002")
-    for ((label, expression) in listOf("repeat(item) x3" to oneRepeat, "item.where x3" to oneFull)) {
+    for ((label, expression) in
+      listOf("repeat(item) x3" to oneRepeat, "item.where x3" to oneFull)) {
       repeat(5) { engine.evaluate(emptyMap<String, Any?>(), response, null, response, expression) }
       val durationsNanos =
         (1..10).map {
@@ -194,7 +195,9 @@ class QuestionnaireExpressionPerformanceBenchmark {
     }
 
     log("")
-    log("=== SDC leftover from change 1: detectExpressionCyclicDependency (isReferencedBy regex) ===")
+    log(
+      "=== SDC leftover from change 1: detectExpressionCyclicDependency (isReferencedBy regex) ===",
+    )
     val items = questionnaireRepeat.item
     cyclicDependencyScan(items)
     val cyclicDurations =
@@ -336,8 +339,12 @@ class QuestionnaireExpressionPerformanceBenchmark {
     Full("%resource.item.where lookup of the 3 preceding items, summed"),
   }
 
-  private fun threeItemExpression(dataset: Dataset, first: String, second: String, third: String):
-    String {
+  private fun threeItemExpression(
+    dataset: Dataset,
+    first: String,
+    second: String,
+    third: String,
+  ): String {
     fun lookup(linkId: String): String {
       val search =
         when (dataset) {

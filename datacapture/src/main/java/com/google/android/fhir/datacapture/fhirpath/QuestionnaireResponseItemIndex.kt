@@ -29,8 +29,8 @@ internal const val TREE_ITEM_SEARCH_EXPRESSION = "%resource.item"
 /**
  * How a rewritten search reads the index. `repeat(item)` flattens the item tree (leaf). `.item`
  * returns only the direct children of the resource (tree). The two item sets are not the same:
- * nested items are in the leaf set and not the tree set, and `repeat(item)` also drops
- * `equalsDeep` duplicates.
+ * nested items are in the leaf set and not the tree set, and `repeat(item)` also drops `equalsDeep`
+ * duplicates.
  */
 internal enum class ItemIndexAccess {
   Leaf,
@@ -59,8 +59,8 @@ internal enum class ItemIndexAccess {
  * Tree (`%resource.item`) is the resource's `item` children, in list order, with no flattening and
  * no de-duplication. Nested items are not in it.
  *
- * Each mode is evaluated on first use, so an expression that only searches `.item` does not pay
- * for `repeat(item)`, and the other way around.
+ * Each mode is evaluated on first use, so an expression that only searches `.item` does not pay for
+ * `repeat(item)`, and the other way around.
  *
  * An index reflects the response as it was when it was built, including the answers, since
  * de-duplication depends on them. It is therefore owned by [QuestionnaireExpressionCache] and lives

@@ -172,7 +172,9 @@ class IndexedItemSearchExpressionTest {
       )
       .isNull()
     assertThat(
-        indexedItemSearchExpression("%resource.item.where(linkId='a').answer.value + %sdcTreeItems0"),
+        indexedItemSearchExpression(
+          "%resource.item.where(linkId='a').answer.value + %sdcTreeItems0",
+        ),
       )
       .isNull()
   }
@@ -186,7 +188,9 @@ class IndexedItemSearchExpressionTest {
       )!!
 
     assertThat(indexed.expression)
-      .isEqualTo("%sdcRepeatItems0.where(linkId='a').count() = %sdcTreeItems1.where(linkId='b').count()")
+      .isEqualTo(
+        "%sdcRepeatItems0.where(linkId='a').count() = %sdcTreeItems1.where(linkId='b').count()",
+      )
     assertThat(indexed.itemCollections)
       .containsExactly("sdcRepeatItems0", leaf("a"), "sdcTreeItems1", tree("b"))
   }

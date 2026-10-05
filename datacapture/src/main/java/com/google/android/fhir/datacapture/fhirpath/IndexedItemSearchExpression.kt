@@ -161,7 +161,9 @@ private fun rewriteItemSearches(expression: String): IndexedItemSearchExpression
 
 private data class ItemSearch(val range: IntRange, val access: ItemIndexAccess)
 
-/** Leaf and tree searches of [expression], in source order, skipping those inside string literals. */
+/**
+ * Leaf and tree searches of [expression], in source order, skipping those inside string literals.
+ */
 private fun itemSearches(expression: String): List<ItemSearch> {
   val searches = mutableListOf<ItemSearch>()
   for (match in REPEAT_ITEM_SEARCH.findAll(expression)) {
@@ -183,7 +185,8 @@ private fun itemSearches(expression: String): List<ItemSearch> {
  * selects, or `null` when it requires none.
  */
 private fun mandatoryLinkIdOfWhere(expression: String, index: Int): String? {
-  val whereCall = WHERE_CALL.find(expression, index)?.takeIf { it.range.first == index } ?: return null
+  val whereCall =
+    WHERE_CALL.find(expression, index)?.takeIf { it.range.first == index } ?: return null
   val condition = argumentOf(expression, whereCall.range.last) ?: return null
   return mandatoryLinkId(condition)
 }
