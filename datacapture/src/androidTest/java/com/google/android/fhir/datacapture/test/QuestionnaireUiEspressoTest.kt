@@ -805,6 +805,7 @@ class QuestionnaireUiEspressoTest {
   fun shouldCollapseFlyoverWhenTheCaptionItselfIsTapped() {
     buildFragmentFromQuestionnaire(
       Questionnaire().apply {
+        id = "a-questionnaire"
         addItem(
           Questionnaire.QuestionnaireItemComponent().apply {
             linkId = "question"
