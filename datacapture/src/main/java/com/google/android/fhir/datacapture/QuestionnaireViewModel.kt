@@ -742,6 +742,15 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
           }
         }
     }
+    if (changedItems.isNotEmpty()) {
+      Timber.w(
+        "Calculated expressions did not settle within %d passes, starting from %s. " +
+          "Still pending: %s. Some calculated answers may be stale.",
+        MAX_CALCULATED_EXPRESSION_PASSES,
+        questionnaireItem.linkId,
+        changedItems.joinToString { it.linkId },
+      )
+    }
   }
 
   /**
