@@ -36,6 +36,7 @@ import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.contrib.RecyclerViewActions
+import androidx.test.espresso.matcher.BoundedMatcher
 import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
@@ -49,6 +50,9 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
 import ca.uhn.fhir.parser.IParser
 import com.google.android.fhir.datacapture.QuestionnaireFragment
+import com.google.android.fhir.datacapture.extensions.DisplayItemControlType
+import com.google.android.fhir.datacapture.extensions.EXTENSION_ITEM_CONTROL_SYSTEM
+import com.google.android.fhir.datacapture.extensions.EXTENSION_ITEM_CONTROL_URL
 import com.google.android.fhir.datacapture.questionnaireViewModelCoroutineContext
 import com.google.android.fhir.datacapture.test.utilities.clickIcon
 import com.google.android.fhir.datacapture.test.utilities.clickOnText
@@ -72,8 +76,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers
+import org.hamcrest.Matcher
+import org.hl7.fhir.r4.model.CodeableConcept
+import org.hl7.fhir.r4.model.Coding
 import org.hl7.fhir.r4.model.DateTimeType
 import org.hl7.fhir.r4.model.DateType
+import org.hl7.fhir.r4.model.Extension
 import org.hl7.fhir.r4.model.Questionnaire
 import org.hl7.fhir.r4.model.QuestionnaireResponse
 import org.junit.Assert
@@ -791,6 +799,64 @@ class QuestionnaireUiEspressoTest {
       override fun perform(uiController: UiController?, view: View) {
         view.findViewById<View>(id)?.performClick()
       }
+    }
+
+  @Test
+  fun shouldCollapseFlyoverWhenTheCaptionItselfIsTapped() {
+    buildFragmentFromQuestionnaire(
+      Questionnaire().apply {
+        addItem(
+          Questionnaire.QuestionnaireItemComponent().apply {
+            linkId = "question"
+            text = "Question?"
+            type = Questionnaire.QuestionnaireItemType.BOOLEAN
+            addItem(
+              Questionnaire.QuestionnaireItemComponent().apply {
+                linkId = "question-flyover"
+                text =
+                  "A flyover caption long enough to wrap onto more than one line when expanded."
+                type = Questionnaire.QuestionnaireItemType.DISPLAY
+                addExtension(flyoverItemControlExtension())
+              },
+            )
+          },
+        )
+      },
+    )
+
+    onView(withId(R.id.flyover_text)).check(ViewAssertions.matches(hasMaxLines(Integer.MAX_VALUE)))
+
+    // A real touch on the caption, not performClick. The caption is clickable because of its
+    // movement method, so it swallows the gesture unless the toggle is set on it as well; a
+    // semantics-level click would pass even when it does.
+    onView(withId(R.id.flyover_text)).perform(ViewActions.click())
+
+    onView(withId(R.id.flyover_text)).check(ViewAssertions.matches(hasMaxLines(1)))
+  }
+
+  private fun flyoverItemControlExtension() =
+    Extension().apply {
+      url = EXTENSION_ITEM_CONTROL_URL
+      setValue(
+        CodeableConcept().apply {
+          coding =
+            listOf(
+              Coding().apply {
+                code = DisplayItemControlType.FLYOVER.extensionCode
+                system = EXTENSION_ITEM_CONTROL_SYSTEM
+              },
+            )
+        },
+      )
+    }
+
+  private fun hasMaxLines(expected: Int): Matcher<View> =
+    object : BoundedMatcher<View, TextView>(TextView::class.java) {
+      override fun describeTo(description: org.hamcrest.Description) {
+        description.appendText("TextView with maxLines $expected")
+      }
+
+      override fun matchesSafely(item: TextView) = item.maxLines == expected
     }
 
   private fun buildFragmentFromQuestionnaire(
