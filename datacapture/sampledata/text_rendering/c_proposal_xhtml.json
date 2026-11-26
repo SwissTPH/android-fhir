@@ -1,0 +1,63 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "c_proposal_xhtml",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "registration_Ss_d1",
+      "type": "group",
+      "text": "Registration",
+      "item": [
+        {
+          "linkId": "demo_is_happy",
+          "text": "Are you happy",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "code": "radio-button"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "demo_m_happy",
+          "type": "display",
+          "text": "We are happy for you, because you selected …",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>We are happy for you, because you selected <strong>…</strong></p></div>",
+                "_valueString": {
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                      "valueExpression": {
+                        "language": "text/fhirpath",
+                        "expression": "'<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>We are happy for you, because you selected <strong>' & iif((%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='demo_is_happy').answer.where($this.exists()).value).exists(), (%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='demo_is_happy').answer.where($this.exists()).value).toString().escape('html'), '…') & '</strong></p></div>'"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                "valueExpression": {
+                  "language": "text/fhirpath",
+                  "expression": "'We are happy for you, because you selected ' & iif((%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='demo_is_happy').answer.where($this.exists()).value).exists(), (%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='demo_is_happy').answer.where($this.exists()).value).toString(), '…')"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

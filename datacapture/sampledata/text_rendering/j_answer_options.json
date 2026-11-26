@@ -1,0 +1,67 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "j_answer_options",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "grp",
+      "type": "group",
+      "text": "Group",
+      "item": [
+        {
+          "linkId": "signs",
+          "type": "choice",
+          "text": "Signs",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "code": "radio-button"
+                  }
+                ]
+              }
+            }
+          ],
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "urn:x",
+                "code": "conv",
+                "display": "Convulsions <now>",
+                "_display": {
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                      "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><b>Convulsions</b> (now)</div>"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "urn:x",
+                "code": "fever",
+                "display": "Fever <38"
+              }
+            },
+            {
+              "valueString": "Rash <3d",
+              "_valueString": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                    "valueMarkdown": "*Rash* <3d"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

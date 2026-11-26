@@ -1,0 +1,45 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "e_static_markdown",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "registration_Ss_d1",
+      "type": "group",
+      "text": "Registration",
+      "item": [
+        {
+          "linkId": "demo_is_happy",
+          "text": "Are you happy",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "code": "radio-button"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "static_note",
+          "type": "display",
+          "text": "Danger signs\n• Convulsions\n• Unable to drink",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "**Danger signs**\n\n- Convulsions\n- *Unable* to drink"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

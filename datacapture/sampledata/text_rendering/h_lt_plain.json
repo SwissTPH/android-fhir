@@ -1,0 +1,90 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "h_lt_plain",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "grp",
+      "type": "group",
+      "text": "Group",
+      "item": [
+        {
+          "linkId": "demo_is_happy",
+          "text": "Are you happy",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "code": "radio-button"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "lt_legacy",
+          "type": "display",
+          "text": "Age <5 years"
+        },
+        {
+          "linkId": "lt_live",
+          "type": "display",
+          "text": "MUAC<115mm",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>MUAC</b> &lt;115 mm</p></div>"
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                "valueExpression": {
+                  "language": "text/fhirpath",
+                  "expression": "iif((%resource.item.where(linkId='grp').item.where(linkId='demo_is_happy').answer.value).exists(), '<2 months: give 1/2 tablet', 'MUAC<115mm')"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "linkId": "lt_static",
+          "type": "display",
+          "text": "Age <5 years",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "Age **<5** years"
+              }
+            ]
+          }
+        },
+        {
+          "linkId": "prefix_md",
+          "type": "string",
+          "prefix": "1<a",
+          "text": "Weight",
+          "_prefix": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "**1<a**"
+              }
+            ]
+          }
+        },
+        {
+          "linkId": "prefix_legacy",
+          "type": "string",
+          "prefix": "<1",
+          "text": "Height"
+        }
+      ]
+    }
+  ]
+}

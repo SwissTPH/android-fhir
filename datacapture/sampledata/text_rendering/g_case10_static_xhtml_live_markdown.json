@@ -1,0 +1,67 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "g_case10_static_xhtml_live_markdown",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "grp",
+      "type": "group",
+      "text": "Group",
+      "item": [
+        {
+          "linkId": "demo_is_happy",
+          "text": "Are you happy",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "code": "radio-button"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "echo",
+          "type": "display",
+          "text": "Selected: …",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Selected: <b>…</b></p></div>"
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "Selected: **…**",
+                "_valueMarkdown": {
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                      "valueExpression": {
+                        "language": "text/fhirpath",
+                        "expression": "'Selected: **' & iif((%resource.item.where(linkId='grp').item.where(linkId='demo_is_happy').answer.value).exists(), (%resource.item.where(linkId='grp').item.where(linkId='demo_is_happy').answer.value).toString(), '…') & '**'"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                "valueExpression": {
+                  "language": "text/fhirpath",
+                  "expression": "'Selected: ' & iif((%resource.item.where(linkId='grp').item.where(linkId='demo_is_happy').answer.value).exists(), (%resource.item.where(linkId='grp').item.where(linkId='demo_is_happy').answer.value).toString(), '…')"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
