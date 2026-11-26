@@ -1,0 +1,73 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "d_escape_markdown",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "registration_Ss_d1",
+      "type": "group",
+      "text": "Registration",
+      "item": [
+        {
+          "linkId": "demo_is_happy",
+          "text": "Are you happy",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "code": "radio-button"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "remark",
+          "text": "Remark",
+          "type": "string",
+          "initial": [
+            {
+              "valueString": "a*b <c> & \"d\""
+            }
+          ]
+        },
+        {
+          "linkId": "remark_echo",
+          "type": "display",
+          "text": "Your remark: …",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "Your remark: *…*",
+                "_valueMarkdown": {
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                      "valueExpression": {
+                        "language": "text/fhirpath",
+                        "expression": "'Your remark: *' & iif((%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='remark').answer.value).exists(), (%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='remark').answer.value).toString().replace('\\\\', '\\\\\\\\').replace('*', '\\\\*').replace('_', '\\\\_').replace('`', '\\\\`').replace('[', '\\\\[').replace(']', '\\\\]').replace('<', '\\\\<').replace('>', '\\\\>').replace('&', '\\\\&').replace('#', '\\\\#'), '…') & '*'"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression",
+                "valueExpression": {
+                  "language": "text/fhirpath",
+                  "expression": "'Your remark: ' & iif((%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='remark').answer.value).exists(), (%resource.item.where(linkId='registration_Ss_d1').item.where(linkId='remark').answer.value).toString(), '…')"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

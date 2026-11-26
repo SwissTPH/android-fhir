@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,20 @@ fun Type.asStringValue(): String {
 fun Type.displayString(context: Context): String =
   getDisplayString(this, context) ?: context.getString(R.string.not_answered)
 
-fun Type.displayStringSpanned(context: Context): Spanned = displayString(context).toSpanned()
+/**
+ * [displayString] as formatted text: an answer option's static `rendering-xhtml` /
+ * `rendering-markdown` (on `Coding._display` or `valueString`) when present, otherwise the display
+ * string parsed as HTML like before.
+ */
+fun Type.displayStringSpanned(context: Context): Spanned =
+  when (this) {
+      is Coding -> displayElement.takeIf { it.hasTextRendering }
+      is StringType -> takeIf { it.hasTextRendering }
+      else -> null
+    }
+    ?.resolveDisplayText()
+    ?.toSpanned()
+    ?: displayString(context).toSpanned()
 
 /** Returns value as string depending on the [Type] of element. */
 fun Type.getValueAsString(context: Context): String =
@@ -151,7 +164,7 @@ internal fun Coding.matches(other: Coding): Boolean {
 }
 
 internal fun StringType.localizedTextAnnotatedString(): AnnotatedString? {
-  return this.getLocalizedText()?.toAnnotatedString()
+  return resolveDisplayText()?.toAnnotatedString()
 }
 
 /** Converts Coding to CodeType. */

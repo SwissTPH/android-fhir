@@ -1,0 +1,87 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "k_translation",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "grp",
+      "type": "group",
+      "text": "Group",
+      "item": [
+        {
+          "linkId": "greet",
+          "type": "display",
+          "text": "Hello <friend>",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "fr"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Bonjour <ami>"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><b>Hello</b> friend</div>"
+              }
+            ]
+          }
+        },
+        {
+          "linkId": "greet2",
+          "type": "display",
+          "text": "Hello",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "fr"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Bonjour"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><b>Hello</b></div>"
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "**Hello**",
+                "_valueMarkdown": {
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                      "extension": [
+                        {
+                          "url": "lang",
+                          "valueCode": "fr"
+                        },
+                        {
+                          "url": "content",
+                          "valueString": "**Bonjour**"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

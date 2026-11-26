@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 Google LLC
+ * Copyright 2022-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.extensions.displayString
+import com.google.android.fhir.datacapture.extensions.displayStringSpanned
 import com.google.android.fhir.datacapture.extensions.getRequiredOrOptionalText
 import com.google.android.fhir.datacapture.extensions.getValidationErrorMessage
 import com.google.android.fhir.datacapture.extensions.identifierString
@@ -94,6 +95,7 @@ internal object DropDownViewHolderFactory :
                 it.value.identifierString(context),
                 it.value.displayString(context),
                 it.itemAnswerOptionImage(context),
+                it.value.displayStringSpanned(context),
               )
             }
             .toMutableList()
@@ -207,10 +209,12 @@ internal data class DropDownAnswerOption(
   val answerId: String,
   val answerOptionString: String,
   val answerOptionImage: Drawable? = null,
+  /** The option's formatted display (static rendering extension), if any. */
+  val answerOptionSpanned: Spanned? = null,
 ) {
   override fun toString(): String {
     return this.answerOptionString
   }
 
-  fun answerOptionStringSpanned(): Spanned = answerOptionString.toSpanned()
+  fun answerOptionStringSpanned(): Spanned = answerOptionSpanned ?: answerOptionString.toSpanned()
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Google LLC
+ * Copyright 2023-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.google.android.fhir.datacapture.views.factories
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.Spanned
 import android.view.View
 import android.widget.TextView
 import androidx.activity.viewModels
@@ -28,6 +29,7 @@ import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.extensions.ItemControlTypes
 import com.google.android.fhir.datacapture.extensions.asStringValue
 import com.google.android.fhir.datacapture.extensions.displayString
+import com.google.android.fhir.datacapture.extensions.displayStringSpanned
 import com.google.android.fhir.datacapture.extensions.getRequiredOrOptionalText
 import com.google.android.fhir.datacapture.extensions.getValidationErrorMessage
 import com.google.android.fhir.datacapture.extensions.itemControl
@@ -189,6 +191,9 @@ data class OptionSelectOption(
   val context: Context,
 ) {
   val displayString: String = item.value.displayString(context)
+
+  /** [displayString] formatted from the option's static rendering extension, if any. */
+  val displaySpanned: Spanned = item.value.displayStringSpanned(context)
 }
 
 private fun QuestionnaireViewItem.extractInitialOptions(context: Context): SelectedOptions {

@@ -1,0 +1,73 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "i_help_flyover",
+  "status": "active",
+  "item": [
+    {
+      "linkId": "grp",
+      "type": "group",
+      "text": "Group",
+      "item": [
+        {
+          "linkId": "temp",
+          "type": "decimal",
+          "text": "Temperature",
+          "item": [
+            {
+              "linkId": "temp_flyover",
+              "type": "display",
+              "text": "Fever if >37.5 <b>",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "flyover"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                    "valueMarkdown": "Fever if *>37.5*"
+                  }
+                ]
+              }
+            },
+            {
+              "linkId": "temp_help",
+              "type": "display",
+              "text": "Measure <armpit>",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "help"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/rendering-xhtml",
+                    "valueString": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Measure in the <u>armpit</u></p></div>"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

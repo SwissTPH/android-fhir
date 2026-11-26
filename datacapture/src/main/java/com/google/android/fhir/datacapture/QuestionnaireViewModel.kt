@@ -27,6 +27,7 @@ import ca.uhn.fhir.context.FhirVersionEnum
 import ca.uhn.fhir.parser.IParser
 import com.google.android.fhir.datacapture.enablement.EnablementEvaluator
 import com.google.android.fhir.datacapture.expressions.EnabledAnswerOptionsEvaluator
+import com.google.android.fhir.datacapture.extensions.DisplayText
 import com.google.android.fhir.datacapture.extensions.EntryMode
 import com.google.android.fhir.datacapture.extensions.allItems
 import com.google.android.fhir.datacapture.extensions.calculatedExpression
@@ -38,6 +39,7 @@ import com.google.android.fhir.datacapture.extensions.filterByCodeInNameExtensio
 import com.google.android.fhir.datacapture.extensions.flattened
 import com.google.android.fhir.datacapture.extensions.forEachItemPair
 import com.google.android.fhir.datacapture.extensions.hasDifferentAnswerSet
+import com.google.android.fhir.datacapture.extensions.hasTextRendering
 import com.google.android.fhir.datacapture.extensions.isDisplayItem
 import com.google.android.fhir.datacapture.extensions.isEnableWhenReferencedBy
 import com.google.android.fhir.datacapture.extensions.isExpressionReferencedBy
@@ -46,14 +48,16 @@ import com.google.android.fhir.datacapture.extensions.isHidden
 import com.google.android.fhir.datacapture.extensions.isPaginated
 import com.google.android.fhir.datacapture.extensions.isRepeatedGroup
 import com.google.android.fhir.datacapture.extensions.launchTimestamp
-import com.google.android.fhir.datacapture.extensions.localizedTextSpanned
+import com.google.android.fhir.datacapture.extensions.localizedPlainText
 import com.google.android.fhir.datacapture.extensions.maxValue
 import com.google.android.fhir.datacapture.extensions.maxValueCqfCalculatedValueExpression
 import com.google.android.fhir.datacapture.extensions.minValue
 import com.google.android.fhir.datacapture.extensions.minValueCqfCalculatedValueExpression
 import com.google.android.fhir.datacapture.extensions.packRepeatedGroups
 import com.google.android.fhir.datacapture.extensions.questionnaireLaunchContexts
+import com.google.android.fhir.datacapture.extensions.resolveDisplayText
 import com.google.android.fhir.datacapture.extensions.shouldHaveNestedItemsUnderAnswers
+import com.google.android.fhir.datacapture.extensions.textRenderings
 import com.google.android.fhir.datacapture.extensions.unpackRepeatedGroups
 import com.google.android.fhir.datacapture.extensions.validateLaunchContextExtensions
 import com.google.android.fhir.datacapture.extensions.zipByLinkId
@@ -1062,6 +1066,28 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
         ?.let { questionnaireResponseItem.text = it }
     }
 
+    // Formatted text from rendering-xhtml / rendering-markdown on `_text`, whose value may carry
+    // its
+    // own cqf-expression (live formatted text). See [resolveDisplayText] for the selection rule.
+    val formattedQuestionHtml =
+      questionnaireItem.textElement
+        .takeIf { it.hasTextRendering }
+        ?.let { text ->
+          val liveValues =
+            text.textRenderings
+              .mapNotNull { it.cqfExpression }
+              .associateWith {
+                expressionEvaluator
+                  .evaluateExpressionValue(questionnaireItem, questionnaireResponseItem, it)
+                  ?.primitiveValue()
+              }
+          text.resolveDisplayText(
+            livePlain = questionnaireResponseItem.text.takeIf { text.cqfExpression != null },
+            evaluate = { liveValues[it] },
+          ) as? DisplayText.Formatted
+        }
+        ?.html
+
     val (enabledQuestionnaireAnswerOptions, disabledQuestionnaireResponseAnswers) =
       answerOptionsEvaluator.evaluate(
         questionnaireItem,
@@ -1108,6 +1134,7 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
               }
                 ?: questionnaireItem.maxValue,
             draftAnswer = draftAnswerMap[questionnaireResponseItem],
+            formattedQuestionHtml = formattedQuestionHtml,
             enabledDisplayItems =
               questionnaireItem.item.filter {
                 it.isDisplayItem &&
@@ -1242,7 +1269,7 @@ internal class QuestionnaireViewModel(application: Application, state: SavedStat
       ) {
         questionnaireResponseItem.apply {
           if (text.isNullOrBlank()) {
-            text = questionnaireItem.localizedTextSpanned?.toString()
+            text = questionnaireItem.textElement?.localizedPlainText()
           }
           // Nested group items
           item = getEnabledResponseItems(questionnaireItem.item, questionnaireResponseItem.item)

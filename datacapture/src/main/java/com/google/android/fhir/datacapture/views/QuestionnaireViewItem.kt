@@ -21,14 +21,16 @@ import android.text.Spanned
 import androidx.compose.ui.text.AnnotatedString
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.fhir.datacapture.R
+import com.google.android.fhir.datacapture.extensions.DisplayText
+import com.google.android.fhir.datacapture.extensions.cqfExpression
 import com.google.android.fhir.datacapture.extensions.displayString
+import com.google.android.fhir.datacapture.extensions.hasTextRendering
 import com.google.android.fhir.datacapture.extensions.isHelpCode
 import com.google.android.fhir.datacapture.extensions.localizedTextAnnotatedString
 import com.google.android.fhir.datacapture.extensions.localizedTextSpanned
 import com.google.android.fhir.datacapture.extensions.maxValue
 import com.google.android.fhir.datacapture.extensions.minValue
-import com.google.android.fhir.datacapture.extensions.toAnnotatedString
-import com.google.android.fhir.datacapture.extensions.toSpanned
+import com.google.android.fhir.datacapture.extensions.plainDisplayText
 import com.google.android.fhir.datacapture.validation.NotValidated
 import com.google.android.fhir.datacapture.validation.Valid
 import com.google.android.fhir.datacapture.validation.ValidationResult
@@ -70,6 +72,9 @@ import org.hl7.fhir.r4.model.Type
  *   be used for widgets that check for bounds and change behavior based on the max allowed answer
  *   value, e.g the Slider widget
  * @param draftAnswer the draft input that cannot be stored in the [QuestionnaireResponse].
+ * @param formattedQuestionHtml the question text from its `rendering-xhtml` / `rendering-markdown`
+ *   extension, as HTML, evaluated when the extension's value has a `cqf-expression`. Shown instead
+ *   of the plain text.
  * @param enabledDisplayItems the enabled display items in the given [questionnaireItem]
  * @param questionViewTextConfiguration configuration to show asterisk, required and optional text
  *   in the header view.
@@ -99,6 +104,7 @@ data class QuestionnaireViewItem(
   val isFlyoverCollapsed: Boolean = false,
   val flyoverStateChangedCallback: (Boolean, QuestionnaireResponseItemComponent) -> Unit = { _, _ ->
   },
+  val formattedQuestionHtml: String? = null,
 ) {
 
   fun getQuestionnaireResponseItem(): QuestionnaireResponseItemComponent = questionnaireResponseItem
@@ -217,13 +223,27 @@ data class QuestionnaireViewItem(
    * is derived from [localizedTextSpanned] of [QuestionnaireResponse.QuestionnaireItemComponent]
    */
   val questionText: Spanned? by lazy {
-    questionnaireResponseItem.text?.toSpanned() ?: questionnaireItem.localizedTextSpanned
+    formattedQuestionHtml?.let { DisplayText.Formatted(it).toSpanned() }
+      ?: livePlainText?.toSpanned() ?: questionnaireItem.localizedTextSpanned
   }
 
   val questionTextAnnotatedString: AnnotatedString? by lazy {
-    questionnaireResponseItem.text?.toAnnotatedString()
-      ?: questionnaireItem.textElement.localizedTextAnnotatedString()
+    formattedQuestionHtml?.let { DisplayText.Formatted(it).toAnnotatedString() }
+      ?: livePlainText?.toAnnotatedString()
+        ?: questionnaireItem.textElement.localizedTextAnnotatedString()
   }
+
+  /**
+   * The text in the response item (the evaluated `cqf-expression` of `text`). When `text` is static
+   * and has a rendering extension, the rendering is shown instead. With a rendering extension the
+   * value is plain text and shown as typed; without one it is parsed as HTML like before.
+   */
+  private val livePlainText: DisplayText?
+    get() {
+      val element = questionnaireItem.textElement
+      if (element.hasTextRendering && element.cqfExpression == null) return null
+      return questionnaireResponseItem.text?.let { element.plainDisplayText(it) }
+    }
 
   /**
    * Returns whether this [QuestionnaireViewItem] and the `other` [QuestionnaireViewItem] have the
