@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Google LLC
+ * Copyright 2022-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.fhir.datacapture.R
 import com.google.android.fhir.datacapture.extensions.itemAnswerOptionImage
 import com.google.android.fhir.datacapture.extensions.optionExclusive
-import com.google.android.fhir.datacapture.extensions.toSpanned
 import com.google.android.fhir.datacapture.views.factories.OptionSelectOption
 import com.google.android.fhir.datacapture.views.factories.QuestionnaireItemDialogSelectViewModel
 import com.google.android.fhir.datacapture.views.factories.SelectedOptions
@@ -209,7 +208,7 @@ private class OptionSelectAdapter(val multiSelectEnabled: Boolean) :
           } else {
             (holder as OptionSelectViewHolder.OptionSingle).radioButton
           }
-        compoundButton.text = item.option.displayString.toSpanned()
+        compoundButton.text = item.option.displaySpanned
         compoundButton.setCompoundDrawablesRelative(
           item.option.item.itemAnswerOptionImage(compoundButton.context),
           null,

@@ -30,7 +30,6 @@ import com.google.android.fhir.datacapture.QuestionnaireViewHolderType
 import com.google.android.fhir.datacapture.fhirpath.evaluateToDisplay
 import com.google.android.fhir.datacapture.validation.MAX_VALUE_EXTENSION_URL
 import com.google.android.fhir.datacapture.validation.MIN_VALUE_EXTENSION_URL
-import com.google.android.fhir.getLocalizedText
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -394,17 +393,17 @@ internal fun String.toAnnotatedString(): AnnotatedString {
  * present. Default value otherwise.
  */
 val QuestionnaireItemComponent.localizedTextSpanned: Spanned?
-  get() = textElement?.getLocalizedText()?.toSpanned()
+  get() = textElement?.resolveDisplayText()?.toSpanned()
 
 val QuestionnaireItemComponent.localizedTextAnnotatedString: AnnotatedString?
-  get() = textElement?.getLocalizedText()?.toAnnotatedString()
+  get() = textElement?.resolveDisplayText()?.toAnnotatedString()
 
 /**
  * Localized and spanned value of [Questionnaire.QuestionnaireItemComponent.prefix] if translation
  * is present. Default value otherwise.
  */
 val QuestionnaireItemComponent.localizedPrefixSpanned: Spanned?
-  get() = prefixElement?.getLocalizedText()?.toSpanned()
+  get() = prefixElement?.resolveDisplayText()?.toSpanned()
 
 /**
  * A nested questionnaire item of type display with displayCategory extension with
